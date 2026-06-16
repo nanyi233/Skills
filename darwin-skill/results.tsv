@@ -1,0 +1,7 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-06-16T15:15	4c4ac7b	dan-koe-perspective	-	61.2	baseline	-	初始评估	dry_run
+2026-06-16T15:20	2dbcf13	dan-koe-perspective	61.2	69.1	keep	dim2/3/4簇	+3checkpoint+if-then分支+显式跳转	dry_run
+2026-06-16T15:25	6bc9e0e	dan-koe-perspective	69.1	72.1	keep	dim9	+独立黑名单章节9条反模式	dry_run
+2026-06-16T15:30	1097988	dan-koe-perspective	72.1	74.8	keep	dim5	搜索模板具体化+行动格式约束+去软化措辞	dry_run
+2026-06-16T15:35	d780ca8	dan-koe-perspective	74.8	76.6	keep	dim4	+Step4回答后校准checkpoint	dry_run
+2026-06-16T15:40	cfd83c3	dan-koe-perspective	76.6	77.4	keep	dim6	URL补全https前缀	dry_run

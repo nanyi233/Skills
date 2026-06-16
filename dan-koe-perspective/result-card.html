@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Darwin Skill - Result Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .card {
+    width: 960px;
+    background: #0d0d0d;
+    border: 1px solid #1a3a1a;
+    border-radius: 8px;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #00ff41, #00cc33, #00ff41);
+  }
+
+  /* Scanline effect */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.015) 2px,
+      rgba(0, 255, 65, 0.015) 4px
+    );
+    pointer-events: none;
+  }
+
+  .brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 36px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #1a3a1a;
+  }
+
+  .brand-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #00ff41;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .brand-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #3a6a3a;
+  }
+
+  .skill-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-bottom: 32px;
+  }
+
+  .score-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+
+  .score-box {
+    background: #111;
+    border: 1px solid #1a3a1a;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .score-box .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #3a6a3a;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+
+  .score-box .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+  }
+
+  .score-box.before .value { color: #6a3a3a; }
+  .score-box.after .value { color: #00ff41; }
+  .score-box.delta .value { color: #00cc33; }
+
+  .dims-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 32px;
+    margin-bottom: 36px;
+  }
+
+  .dim-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+  }
+
+  .dim-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #8a8a8a;
+  }
+
+  .dim-bar-container {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .dim-bar {
+    height: 8px;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .dim-bar-before {
+    background: #3a1a1a;
+    border: 1px solid #6a3a3a;
+  }
+
+  .dim-bar-after {
+    background: #00ff41;
+    opacity: 0.8;
+  }
+
+  .dim-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .dim-delta.positive { color: #00ff41; }
+  .dim-delta.zero { color: #3a3a3a; }
+
+  .improvements {
+    background: #111;
+    border: 1px solid #1a3a1a;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .improvements h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #00ff41;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+  }
+
+  .improvement-item {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .improvement-item:last-child { border-bottom: none; }
+
+  .improvement-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #00ff41;
+    min-width: 24px;
+  }
+
+  .improvement-text {
+    font-size: 13px;
+    color: #b0b0b0;
+    line-height: 1.5;
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #1a3a1a;
+  }
+
+  .footer-tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #3a6a3a;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #3a3a3a;
+    text-decoration: none;
+  }
+
+  .eval-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #8a6a00;
+    background: #1a1a00;
+    border: 1px solid #3a3a00;
+    border-radius: 3px;
+    padding: 2px 8px;
+    margin-left: 12px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <div class="brand-name">▸ Darwin.skill</div>
+    <div class="brand-date">2026-06-16</div>
+  </div>
+
+  <div class="skill-name">
+    dan-koe-perspective
+    <span class="eval-badge">⚠ dry_run</span>
+  </div>
+
+  <div class="score-section">
+    <div class="score-box before">
+      <div class="label">Before</div>
+      <div class="value">61.2</div>
+    </div>
+    <div class="score-box after">
+      <div class="label">After</div>
+      <div class="value">77.4</div>
+    </div>
+    <div class="score-box delta">
+      <div class="label">Delta</div>
+      <div class="value">+16.2</div>
+    </div>
+  </div>
+
+  <div class="dims-grid">
+    <div class="dim-row">
+      <div class="dim-label">dim1 Frontmatter</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 80px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta zero">±0</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim2 工作流清晰度</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 70px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+1</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim3 失败模式编码</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 50px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+3</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim4 检查点设计</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 30px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+5</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim5 可执行具体性</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 60px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+2</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim6 资源整合度</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 70px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+1</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim7 整体架构</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 80px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta zero">±0</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim8 实测表现</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 60px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 75px"></div>
+        <div class="dim-delta positive">+1.5</div>
+      </div>
+    </div>
+    <div class="dim-row">
+      <div class="dim-label">dim9 反例与黑名单</div>
+      <div class="dim-bar-container">
+        <div class="dim-bar dim-bar-before" style="width: 50px"></div>
+        <div class="dim-bar dim-bar-after" style="width: 80px"></div>
+        <div class="dim-delta positive">+3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="improvements">
+    <h3>// Key Improvements</h3>
+    <div class="improvement-item">
+      <div class="improvement-num">01</div>
+      <div class="improvement-text">+4个🔴CHECKPOINT覆盖全流程：免责声明 → 研究确认 → 回答自检 → 回答后校准</div>
+    </div>
+    <div class="improvement-item">
+      <div class="improvement-num">02</div>
+      <div class="improvement-text">+if-then三段式失败分支表（研究6条+回答3条），消除"只写正向流程"问题</div>
+    </div>
+    <div class="improvement-item">
+      <div class="improvement-num">03</div>
+      <div class="improvement-text">+独立反例黑名单章节（角色层5条+回答层4条），含原因和替代做法</div>
+    </div>
+    <div class="improvement-item">
+      <div class="improvement-num">04</div>
+      <div class="improvement-text">搜索模板具体化（含关键词+年份）+ 行动格式约束"今天/这周，做X"</div>
+    </div>
+    <div class="improvement-item">
+      <div class="improvement-num">05</div>
+      <div class="improvement-text">+Step 4回答后校准 + 不满意降维路径 + 模糊问题🔴STOP追问机制</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-tagline">Train your Skills like you train your models</div>
+    <a class="footer-link" href="https://github.com/alchaincyf/darwin-skill">github.com/alchaincyf/darwin-skill</a>
+  </div>
+</div>
+</body>
+</html>

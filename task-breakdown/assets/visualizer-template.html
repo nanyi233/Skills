@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{TASK_TITLE}} · 任务清单</title>
+<style>
+  :root {
+    --accent: {{ACCENT_COLOR}};
+    --accent-soft: color-mix(in srgb, var(--accent) 28%, transparent);
+    --bg-0: #0a0e1a;
+    --bg-1: #111827;
+    --bg-2: #1f2937;
+    --fg-0: #e5e7eb;
+    --fg-1: #9ca3af;
+    --fg-2: #6b7280;
+    --line: rgba(255,255,255,0.10);
+    --ok: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; min-height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(ellipse at 50% 10%, var(--bg-1) 0%, var(--bg-0) 70%);
+    background-attachment: fixed;
+    color: var(--fg-0);
+    padding-bottom: 80px;
+  }
+
+  /* ===== HUD ===== */
+  .hud {
+    position: sticky; top: 0; z-index: 10;
+    padding: 20px 24px 12px;
+    background: linear-gradient(180deg, rgba(10,14,26,0.95) 60%, transparent 100%);
+    backdrop-filter: blur(12px);
+  }
+  .hud-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .hud-title {
+    font-size: 20px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .hud-meta { color: var(--fg-2); font-size: 13px; margin-left: 12px; font-weight: 400; }
+
+  /* ===== 进度条 ===== */
+  .progress-bar {
+    height: 3px; background: rgba(255,255,255,0.06);
+    border-radius: 999px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 50%, white));
+    border-radius: 999px;
+    transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--accent-soft);
+  }
+
+  /* ===== 效率指标条 ===== */
+  .stats-row {
+    display: flex; gap: 24px; padding: 10px 24px 0;
+    font-size: 13px; color: var(--fg-1);
+  }
+  .stats-row strong { color: var(--fg-0); font-weight: 600; }
+  .stats-row .stat-warn { color: #fbbf24; }
+
+  /* ===== 主体 ===== */
+  .main-wrap {
+    max-width: 780px; margin: 0 auto; padding: 16px 24px;
+    display: flex; flex-direction: column; gap: 36px;
+  }
+
+  /* ===== 阶段区块 ===== */
+  .phase-section {}
+  .phase-header {
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .phase-title {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .phase-meta {
+    font-size: 13px; color: var(--fg-2); margin-top: 4px;
+  }
+
+  /* ===== 卡片 ===== */
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px 16px 56px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, opacity 0.25s;
+  }
+  .card:hover {
+    border-color: var(--accent-soft);
+    transform: translateX(3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .card.done { opacity: 0.45; }
+  .card.done .card-text { text-decoration: line-through; color: var(--fg-2); }
+
+  /* 复选框 */
+  .card-check {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    width: 26px; height: 26px;
+    border: 2px solid var(--fg-2); border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .card:hover .card-check { border-color: var(--accent); }
+  .card.done .card-check {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .card-check svg { width: 14px; height: 14px; opacity: 0; transition: opacity 0.15s, transform 0.25s; }
+  .card.done .card-check svg { opacity: 1; }
+  .card.just-checked .card-check svg { animation: checkBounce 0.35s ease-out; }
+  @keyframes checkBounce {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+
+  .card-id {
+    display: inline-block; font-size: 11px; color: var(--accent);
+    font-weight: 600; margin-bottom: 3px; letter-spacing: 0.5px;
+  }
+  .card-text { font-size: 15px; line-height: 1.5; }
+  .card-min {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--fg-2);
+    background: rgba(255,255,255,0.03); padding: 3px 10px;
+    border-radius: 999px; border: 1px solid var(--line);
+  }
+
+  /* ===== 全部完成 ===== */
+  .done-banner {
+    text-align: center; padding: 40px 0; opacity: 0; transform: translateY(12px);
+    transition: opacity 0.6s, transform 0.6s;
+    pointer-events: none;
+  }
+  .done-banner.show { opacity: 1; transform: translateY(0); }
+  .done-banner .icon { font-size: 48px; margin-bottom: 12px; }
+  .done-banner .text { font-size: 20px; font-weight: 700; color: var(--accent); }
+
+  /* ===== 按钮 ===== */
+  .btn {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+    color: var(--fg-1); padding: 5px 14px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; transition: all 0.2s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-soft); color: var(--fg-0); }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <div class="hud-row">
+    <div>
+      <span class="hud-title">{{TASK_TITLE}}</span>
+      <span class="hud-meta" id="hud-meta"></span>
+    </div>
+    <button class="btn" id="btn-reset">↺ 重置</button>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="stats-row" id="stats-row"></div>
+</div>
+
+<div class="main-wrap" id="main-wrap">
+  <div class="done-banner" id="done-banner">
+    <div class="icon">🎯</div>
+    <div class="text">全部完成！</div>
+  </div>
+</div>
+
+<script id="task-data" type="application/json">
+{{TASK_JSON}}
+</script>
+
+<script>
+(() => {
+  // ============ 数据 ============
+  const data = JSON.parse(document.getElementById('task-data').textContent);
+  const STORAGE_KEY = 'task-breakdown::' + (data.title || 'untitled');
+
+  // 收集所有叶子
+  const allLeaves = [];
+  function collectLeaves(items) {
+    items.forEach(it => {
+      if (it.isLeaf) allLeaves.push(it);
+      else if (it.children) collectLeaves(it.children);
+    });
+  }
+  data.phases.forEach(p => collectLeaves(p.items));
+
+  // ============ 持久化 ============
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { state = {}; }
+  function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {} }
+
+  // ============ 渲染 ============
+  const mainWrap = document.getElementById('main-wrap');
+  const doneBanner = document.getElementById('done-banner');
+
+  function renderAll() {
+    // 清空（保留 doneBanner）
+    mainWrap.querySelectorAll('.phase-section').forEach(el => el.remove());
+
+    data.phases.forEach(phase => {
+      const leaves = [];
+      function gather(items) {
+        items.forEach(it => {
+          if (it.isLeaf) leaves.push(it);
+          else if (it.children) gather(it.children);
+        });
+      }
+      gather(phase.items);
+      if (leaves.length === 0) return;
+
+      const phaseTotal = leaves.reduce((s, l) => s + (l.min || 0), 0);
+
+      const section = document.createElement('div');
+      section.className = 'phase-section';
+      section.innerHTML = `
+        <div class="phase-header">
+          <div class="phase-title">${escapeHtml(phase.id)}. ${escapeHtml(phase.name)}</div>
+          <div class="phase-meta">${leaves.length} 项 · ~${phaseTotal} 分钟</div>
+        </div>
+      `;
+
+      const cardList = document.createElement('div');
+      cardList.className = 'card-list';
+
+      leaves.forEach(leaf => {
+        const card = document.createElement('div');
+        card.className = 'card' + (state[leaf.id] ? ' done' : '');
+        card.innerHTML = `
+          <div class="card-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="card-id">${escapeHtml(leaf.id)}</div>
+          <div class="card-text">${escapeHtml(leaf.text)}</div>
+          <div class="card-min">~${leaf.min || '?'}min</div>
+        `;
+
+        card.addEventListener('click', () => {
+          const wasDone = !!state[leaf.id];
+          state[leaf.id] = !wasDone;
+          save();
+
+          if (!wasDone) {
+            card.classList.add('done', 'just-checked');
+            setTimeout(() => card.classList.remove('just-checked'), 350);
+          } else {
+            card.classList.remove('done');
+          }
+          updateProgress();
+          checkDone();
+        });
+
+        cardList.appendChild(card);
+      });
+
+      section.appendChild(cardList);
+      mainWrap.insertBefore(section, doneBanner);
+    });
+
+    updateProgress();
+    updateStats();
+    checkDone();
+  }
+
+  // ============ 进度 ============
+  function updateProgress() {
+    const total = allLeaves.length;
+    const done = allLeaves.filter(l => state[l.id]).length;
+    const pct = total ? (done / total * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('hud-meta').textContent =
+      `${done}/${total} · 预计 ${data.totalMin || '?'}min`;
+  }
+
+  // ============ 效率指标 ============
+  function updateStats() {
+    const ii = data.idiotIndex;
+    const pr = data.parallelRate;
+    const row = document.getElementById('stats-row');
+    if (ii == null && pr == null) { row.innerHTML = ''; return; }
+
+    let iiClass = '';
+    if (ii != null && ii > 3) iiClass = 'stat-warn';
+
+    row.innerHTML = [
+      ii != null ? `<span>🧠 傻瓜指数：<strong class="${iiClass}">${ii.toFixed(2)}x</strong></span>` : '',
+      pr != null ? `<span>⚡ 并行度：<strong>${(pr * 100).toFixed(0)}%</strong>（${data.parallelizableLeaves || '?'}/${data.totalLeaves || '?'}）</span>` : '',
+    ].filter(Boolean).join('');
+  }
+
+  // ============ 完成检查 ============
+  function checkDone() {
+    const total = allLeaves.length;
+    const done = allLeaves.filter(l => state[l.id]).length;
+    if (total > 0 && done === total) {
+      doneBanner.classList.add('show');
+    } else {
+      doneBanner.classList.remove('show');
+    }
+  }
+
+  // ============ 工具 ============
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ============ 事件 ============
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (!confirm('重置所有勾选状态？')) return;
+    state = {};
+    save();
+    renderAll();
+  });
+
+  // ============ 启动 ============
+  renderAll();
+})();
+</script>
+</body>
+</html>
