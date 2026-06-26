@@ -6,7 +6,7 @@ description: "Darwin Skill 2.0 (达尔文.skill 2.0): autonomous skill optimizer
 # Darwin Skill 2.0
 
 > **v2.0 · 2026-05-28** — 吸收 Microsoft Research SkillLens（arXiv 2605.23899）的 9 维评分药方 + SkillOpt（arXiv 2605.23904）的 validation-gated 验证机制 + human in the loop 三层守关。
->
+> 
 > 借鉴 Karpathy autoresearch 的自主实验循环，对 skills 进行持续优化。
 > 核心理念：**评估 → 改进 → 实测验证 → 人类确认 → 保留或回滚 → 生成成果卡片**
 > GitHub: https://github.com/alchaincyf/darwin-skill
@@ -16,6 +16,7 @@ description: "Darwin Skill 2.0 (达尔文.skill 2.0): autonomous skill optimizer
 ## 设计哲学
 
 autoresearch 的精髓：
+
 1. **单一可编辑资产** — 每次只改一个 SKILL.md
 2. **双重评估** — 结构评分（静态分析）+ 效果验证（跑测试看输出）
 3. **棘轮机制** — 只保留改进，自动回滚退步
@@ -32,29 +33,30 @@ autoresearch 的精髓：
 
 ### 结构维度（59分）— 静态分析
 
-| # | 维度 | 权重 | 评分标准 |
-|---|------|------|---------|
-| 1 | **Frontmatter质量** | 7 | name规范、description包含做什么+何时用+触发词、≤1024字符、**禁结尾加"灵活应用/根据情况判断"等空话尾巴** |
-| 2 | **工作流清晰度** | 12 | 步骤明确可执行、有序号、每步有明确输入/输出 |
-| 3 | **失败模式编码** | 12 | **必须显式编码失败模式**（写出"如果 X 失败 → Y"的明确分支）；有fallback路径、错误恢复；**只写正向流程而不写失败分支扣 ≥3 分**（SkillLens meta-skill 维度） |
-| 4 | **检查点设计** | 6 | 关键决策前有用户确认、防止自主失控；**检查点必须显性标记（🔴/STOP/CHECKPOINT），仅靠"如果...建议..."措辞不算** |
-| 5 | **可执行具体性** | 17 | 不模糊、有具体参数/格式/示例、可直接执行；**禁止"建议/可以考虑/根据情况/灵活把握/视情况而定"等软化措辞**——出现 ≥3 处扣 ≥3 分（SkillLens actionable specificity 维度） |
-| 6 | **资源整合度** | 4 | references/scripts/assets引用正确、路径可达 |
+| #   | 维度                | 权重  | 评分标准                                                                                                           |
+| --- | ----------------- | --- | -------------------------------------------------------------------------------------------------------------- |
+| 1   | **Frontmatter质量** | 7   | name规范、description包含做什么+何时用+触发词、≤1024字符、**禁结尾加"灵活应用/根据情况判断"等空话尾巴**                                             |
+| 2   | **工作流清晰度**        | 12  | 步骤明确可执行、有序号、每步有明确输入/输出                                                                                         |
+| 3   | **失败模式编码**        | 12  | **必须显式编码失败模式**（写出"如果 X 失败 → Y"的明确分支）；有fallback路径、错误恢复；**只写正向流程而不写失败分支扣 ≥3 分**（SkillLens meta-skill 维度）         |
+| 4   | **检查点设计**         | 6   | 关键决策前有用户确认、防止自主失控；**检查点必须显性标记（🔴/STOP/CHECKPOINT），仅靠"如果...建议..."措辞不算**                                         |
+| 5   | **可执行具体性**        | 17  | 不模糊、有具体参数/格式/示例、可直接执行；**禁止"建议/可以考虑/根据情况/灵活把握/视情况而定"等软化措辞**——出现 ≥3 处扣 ≥3 分（SkillLens actionable specificity 维度） |
+| 6   | **资源整合度**         | 4   | references/scripts/assets引用正确、路径可达                                                                             |
 
 ### 效果维度（35分）— 需要实测
 
-| # | 维度 | 权重 | 评分标准 |
-|---|------|------|---------|
-| 7 | **整体架构** | 12 | 结构层次清晰、不冗余不遗漏、与花叔生态一致；**冗余/AI腔废话段落（说白了/换句话说/首先其次综上等花叔禁用词）出现一处扣 1 分** |
-| 8 | **实测表现** | 23 | 用测试prompt跑一遍，输出质量是否符合skill宣称的能力 |
+| #   | 维度       | 权重  | 评分标准                                                                 |
+| --- | -------- | --- | -------------------------------------------------------------------- |
+| 7   | **整体架构** | 12  | 结构层次清晰、不冗余不遗漏、与花叔生态一致；**冗余/AI腔废话段落（说白了/换句话说/首先其次综上等花叔禁用词）出现一处扣 1 分** |
+| 8   | **实测表现** | 23  | 用测试prompt跑一遍，输出质量是否符合skill宣称的能力                                      |
 
 ### Meta-skill 维度（6分）— 反例与黑名单
 
-| # | 维度 | 权重 | 评分标准 |
-|---|------|------|---------|
-| 9 | **反例与黑名单** | 6 | **skill 必须有"不要做什么"的反例清单**；只写"应该做 X"没有"不要做 Y"扣 ≥3 分；红灯/危险动作/反模式应单独章节列出（SkillLens risk-action blacklist 维度） |
+| #   | 维度         | 权重  | 评分标准                                                                                                      |
+| --- | ---------- | --- | --------------------------------------------------------------------------------------------------------- |
+| 9   | **反例与黑名单** | 6   | **skill 必须有"不要做什么"的反例清单**；只写"应该做 X"没有"不要做 Y"扣 ≥3 分；红灯/危险动作/反模式应单独章节列出（SkillLens risk-action blacklist 维度） |
 
 ### 评分规则
+
 - 维度1-7、9：每个维度打 1-10 分，乘以权重得到该维度得分
 - 维度8（实测表现）：跑2-3个测试prompt，按输出质量打1-10分
 - **总分 = Σ(维度分 × 权重) / 10**，满分100
@@ -277,10 +279,10 @@ for each skill:
 ## results.tsv 格式
 
 ```tsv
-timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
-2026-03-31T10:00	baseline	huashu-proofreading	-	78	baseline	-	初始评估	full_test
-2026-03-31T10:05	a1b2c3d	huashu-proofreading	78	84	keep	边界条件	补充fallback	full_test
-2026-03-31T10:10	b2c3d4e	huashu-proofreading	84	82	revert	指令具体性	过度细化	dry_run
+timestamp    commit    skill    old_score    new_score    status    dimension    note    eval_mode
+2026-03-31T10:00    baseline    huashu-proofreading    -    78    baseline    -    初始评估    full_test
+2026-03-31T10:05    a1b2c3d    huashu-proofreading    78    84    keep    边界条件    补充fallback    full_test
+2026-03-31T10:10    b2c3d4e    huashu-proofreading    84    82    revert    指令具体性    过度细化    dry_run
 ```
 
 新增 `eval_mode` 列：`full_test`（跑了子agent测试）或 `dry_run`（模拟推演）。
@@ -304,6 +306,7 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 按优先级排序，每轮只做最高优先级的一个：
 
 ### P0: Runtime 适配性问题（gate 项命中 → 必须先修）
+
 - README/SKILL.md 出现红灯措辞（如「在 Claude Code 里」「Claude Code skill」）→ 替换为 runtime-neutral 措辞
 - Badge 钉死单一 runtime → 改为 `Agent Skills Standard` + `skills.sh` + `Multi-Runtime` 三个中立 badge
 - 安装章节只给一种 runtime 的路径 → 改为「一行命令（auto-detect）+ 手动路径表 + 作为参考资料」三层结构
@@ -311,21 +314,25 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 - 例外：skill 名明确标注单 runtime（如 `xxx-codex`）的，可跳过本项
 
 ### P0: 效果问题（实测发现的）
+
 - 测试输出偏离用户意图 → 检查skill是否有误导性指令
 - 带skill比不带还差 → skill可能过度约束，考虑精简
 - 输出格式不符合预期 → 补充明确的输出模板
 
 ### P1: 结构性问题
+
 - Frontmatter缺少触发词 → 补充中英文触发词
 - 缺少Phase/Step结构 → 重组为线性流程
 - 缺少用户确认检查点 → 在关键决策处插入
 
 ### P2: 具体性问题
+
 - 步骤模糊（"处理图片"）→ 改为具体操作和参数
 - 缺少输入/输出规格 → 补充格式、路径、示例
 - 缺少异常处理 → 补充 "如果X失败，则Y"
 
 ### P3: 可读性问题
+
 - 段落过长 → 拆分+用表格
 - 重复描述 → 合并去重
 - 缺少速查 → 添加TL;DR或决策树
@@ -336,18 +343,18 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 
 流程假设环境理想，但实操常遇异常。以下预定义 fallback，保证优化过程不会「一跑就卡住」。
 
-| 场景 | 触发条件 | 处理动作 |
-|---|---|---|
-| 不在 git 仓库 | `git rev-parse` 失败 | 询问用户：执行 `git init` 或回退到文件备份；用户选后者则 `cp SKILL.md SKILL.md.bak.YYYYMMDD-HHMM` 代替 revert |
-| results.tsv 缺失 | 文件不存在 | 新建并写表头行（9列：含 eval_mode） |
-| results.tsv 损坏 | 列数不匹配 / 非TSV | 备份为 `.bak.YYYYMMDD-HHMM` 后重建，告知用户 |
-| 分支已存在 | `git checkout -b` 失败 | 分支名末尾加 `-2` / `-3`；第3次失败则切回现有分支并询问继续还是新起 |
-| `git revert` 失败 | 冲突 / 工作树脏 | 先 `git stash`，重试；仍失败则从上一个 commit 的 SKILL.md 读出覆盖当前文件手动恢复 |
-| MAX_ROUNDS 触顶（默认3） | 已跑3轮仍有短板 | 不强制 break，展示当前最弱维度问用户「继续加1轮 / 进入Phase 2.5 / 收工」 |
-| 优化后超 150% 体积 | 新文件 > 原 × 1.5 | 拒绝提交，回到改进步骤精简（删冗余/合并重复），再评 |
-| test-prompts.json 已存在 | 文件已在 skill 目录 | 默认复用并展示，问用户「复用 / 重写 / 追加」三选一 |
-| SKILL.md 找不到 | 目录存在但无 SKILL.md | 该 skill 终止，results.tsv 记 `status=error`，继续下一个 |
-| 分数计算规则 | 浮点精度漂移 | 总分保留 1 位小数，改进需严格 > 旧分（不靠四舍五入） |
+| 场景                    | 触发条件                 | 处理动作                                                                                  |
+| --------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| 不在 git 仓库             | `git rev-parse` 失败   | 询问用户：执行 `git init` 或回退到文件备份；用户选后者则 `cp SKILL.md SKILL.md.bak.YYYYMMDD-HHMM` 代替 revert |
+| results.tsv 缺失        | 文件不存在                | 新建并写表头行（9列：含 eval_mode）                                                               |
+| results.tsv 损坏        | 列数不匹配 / 非TSV         | 备份为 `.bak.YYYYMMDD-HHMM` 后重建，告知用户                                                     |
+| 分支已存在                 | `git checkout -b` 失败 | 分支名末尾加 `-2` / `-3`；第3次失败则切回现有分支并询问继续还是新起                                              |
+| `git revert` 失败       | 冲突 / 工作树脏            | 先 `git stash`，重试；仍失败则从上一个 commit 的 SKILL.md 读出覆盖当前文件手动恢复                              |
+| MAX_ROUNDS 触顶（默认3）    | 已跑3轮仍有短板             | 不强制 break，展示当前最弱维度问用户「继续加1轮 / 进入Phase 2.5 / 收工」                                       |
+| 优化后超 150% 体积          | 新文件 > 原 × 1.5        | 拒绝提交，回到改进步骤精简（删冗余/合并重复），再评                                                            |
+| test-prompts.json 已存在 | 文件已在 skill 目录        | 默认复用并展示，问用户「复用 / 重写 / 追加」三选一                                                          |
+| SKILL.md 找不到          | 目录存在但无 SKILL.md      | 该 skill 终止，results.tsv 记 `status=error`，继续下一个                                         |
+| 分数计算规则                | 浮点精度漂移               | 总分保留 1 位小数，改进需严格 > 旧分（不靠四舍五入）                                                         |
 
 **原则**：异常先告知用户，再按规则处理；绝不静默跳过或静默失败。
 
@@ -357,16 +364,16 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 
 来自本机 results.tsv 早期 40 次 0 revert 的教训 + Judge G/H 自指评估暴露的反模式。每条都是**真实踩过的坑**。
 
-| # | 反模式 | 为什么不要做 | 替代做法 |
-|---|---|---|---|
-| 1 | **同 context 自评自改** | 改完后立刻在同一 Claude session 打分，会有「我刚改的肯定更好」乐观偏差（SkillLens 实证 LLM-as-judge 准确率仅 46.4%）| 必须 spawn **独立子 agent** 评分，且至少 2 个 judge 共识才信 |
-| 2 | **`git reset --hard` 当回滚** | 会丢工作树未提交改动；CI 历史断裂 | 用 `git revert HEAD` 创建反向 commit，保留可追溯链 |
-| 3 | **为凑分增冗余** | 触顶后继续硬改往往是「加废话/加段落让 LLM 觉得更详细」，实际质量不变 | 触顶信号（连续 2 轮 Δ<2 分）→ break 进 Phase 3，**见好就收** |
-| 4 | **跳过 test-prompts 直接评分** | 没有 test-prompts 的 dim8 是凭空打分，权重 23% 等于编造 | Phase 0.5 强制设计 2-3 prompts；若用户不给，默认编 3 个并展示确认 |
-| 5 | **轮内改多个维度** | 多变量同时变，分数升降无法归因到具体改动 | 每轮 1 个维度；相关簇（dim2/3/4）改其一时观察另两个是否跟涨 |
-| 6 | **dry_run 比例 > 30%** | dim8 实测维度形同虚设，分数虚高（早期 40 次记录 67% dry_run，0 revert） | 强制至少 1 个真实 full_test；dry_run 多的优化在 results.tsv 显式打 ⚠️ |
-| 7 | **静默跳过异常** | 遇到 git/tsv 异常时静默继续，破坏 ratchet 完整性 | 异常表 10 条 fallback 必须先告知用户再处理 |
-| 8 | **忽视维度相关性单独优化** | dim2/3/4 是相关簇，单独优化 dim2 时常发现已被前轮 dim3 修复推到顶 | 找最低维度时同时看相关簇短板，决定是否同步改 |
+| #   | 反模式                        | 为什么不要做                                                                            | 替代做法                                                  |
+| --- | -------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1   | **同 context 自评自改**         | 改完后立刻在同一 Claude session 打分，会有「我刚改的肯定更好」乐观偏差（SkillLens 实证 LLM-as-judge 准确率仅 46.4%） | 必须 spawn **独立子 agent** 评分，且至少 2 个 judge 共识才信          |
+| 2   | **`git reset --hard` 当回滚** | 会丢工作树未提交改动；CI 历史断裂                                                                | 用 `git revert HEAD` 创建反向 commit，保留可追溯链                |
+| 3   | **为凑分增冗余**                 | 触顶后继续硬改往往是「加废话/加段落让 LLM 觉得更详细」，实际质量不变                                             | 触顶信号（连续 2 轮 Δ<2 分）→ break 进 Phase 3，**见好就收**          |
+| 4   | **跳过 test-prompts 直接评分**   | 没有 test-prompts 的 dim8 是凭空打分，权重 23% 等于编造                                          | Phase 0.5 强制设计 2-3 prompts；若用户不给，默认编 3 个并展示确认         |
+| 5   | **轮内改多个维度**                | 多变量同时变，分数升降无法归因到具体改动                                                              | 每轮 1 个维度；相关簇（dim2/3/4）改其一时观察另两个是否跟涨                   |
+| 6   | **dry_run 比例 > 30%**       | dim8 实测维度形同虚设，分数虚高（早期 40 次记录 67% dry_run，0 revert）                                | 强制至少 1 个真实 full_test；dry_run 多的优化在 results.tsv 显式打 ⚠️ |
+| 7   | **静默跳过异常**                 | 遇到 git/tsv 异常时静默继续，破坏 ratchet 完整性                                                 | 异常表 10 条 fallback 必须先告知用户再处理                          |
+| 8   | **忽视维度相关性单独优化**            | dim2/3/4 是相关簇，单独优化 dim2 时常发现已被前轮 dim3 修复推到顶                                       | 找最低维度时同时看相关簇短板，决定是否同步改                                |
 
 **触发场景**：每轮 Phase 2 改动前对照本表一次。任一反模式命中 → 改方案重写。
 
@@ -388,6 +395,7 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 ## 使用方式
 
 ### 全量优化（推荐首次使用）
+
 ```
 用户："优化所有skills"
 → Phase 0-3 完整流程
@@ -395,18 +403,21 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 ```
 
 ### 单个优化
+
 ```
 用户："优化 huashu-slides 这个skill"
 → 只对指定skill执行 Phase 0.5-2
 ```
 
 ### 仅评估不改
+
 ```
 用户："评估所有skills的质量"
 → 只执行 Phase 0.5-1（设计测试prompt + 基线评估），不进入优化循环
 ```
 
 ### 查看历史
+
 ```
 用户："看看skill优化历史"
 → 读取并展示 results.tsv
@@ -420,6 +431,7 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 > — Karpathy, autoresearch
 
 本skill的对应关系：
+
 - **program.md** → 本文件（评估rubric和约束规则）
 - **train.py** → 每个SKILL.md
 - **val_bpb** → 9维加权总分（含实测表现 + meta-skill 反例黑名单）
@@ -446,11 +458,11 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 
 3种风格，每次随机选择一种：
 
-| 风格 | CSS类 | URL hash | 视觉特点 |
-|------|--------|----------|---------|
-| Warm Swiss | `.theme-swiss` | `#swiss` | 暖白底+赤陶橙，Inter字体，干净网格 |
-| Dark Terminal | `.theme-terminal` | `#terminal` | 近黑底+荧光绿，等宽字体，扫描线 |
-| Newspaper | `.theme-newspaper` | `#newspaper` | 暖白纸+深红，衬线字体，双栏编辑风 |
+| 风格            | CSS类               | URL hash     | 视觉特点                 |
+| ------------- | ------------------ | ------------ | -------------------- |
+| Warm Swiss    | `.theme-swiss`     | `#swiss`     | 暖白底+赤陶橙，Inter字体，干净网格 |
+| Dark Terminal | `.theme-terminal`  | `#terminal`  | 近黑底+荧光绿，等宽字体，扫描线     |
+| Newspaper     | `.theme-newspaper` | `#newspaper` | 暖白纸+深红，衬线字体，双栏编辑风    |
 
 ### 生成流程
 
@@ -490,3 +502,4 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 
 - 顶部：Darwin.skill 品牌标识 + 日期
 - 底部：「Train your Skills like you train your models」+ github.com/alchaincyf/darwin-skill
+```
